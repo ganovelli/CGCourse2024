@@ -128,14 +128,14 @@ int main(void)
         //glDrawArrays(GL_TRIANGLES, 0, 3);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
         check_gl_errors(__LINE__,__FILE__);
-        glUseProgram(0);
-
+ 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
         /* Poll for and process events */
         glfwPollEvents();
     }
+	glUseProgram(0);
 
     glfwTerminate();
     return 0;
