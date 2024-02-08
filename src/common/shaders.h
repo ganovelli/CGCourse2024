@@ -22,7 +22,7 @@ struct shader{
         int operator[](std::string name){
             return uni[name];
         }
-
+#if defined(GL_VERSION_4_3)
 		void  create_program(const GLchar* nameC) {
 			std::string compute_shader_src_code = textFileRead(nameC);
 			create_shader(compute_shader_src_code.c_str(), GL_COMPUTE_SHADER);
@@ -35,7 +35,7 @@ struct shader{
 			check_shader(compute_shader);
 			validate_shader_program(program);
 		}
-
+#endif
 		/* create a program shader */
 		void  create_program( const GLchar *nameV, const char *nameF){
 		
@@ -76,7 +76,9 @@ private:
 			switch (SHADER_TYPE) {
 			case GL_VERTEX_SHADER:   s = vertex_shader = glCreateShader(GL_VERTEX_SHADER);break;
 			case GL_FRAGMENT_SHADER: s = fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);break;
+#if defined(GL_VERSION_4_3)
 			case GL_COMPUTE_SHADER:  s = compute_shader = glCreateShader(GL_COMPUTE_SHADER);break;
+#endif
 			}
 
 			glShaderSource(s, 1, &src, NULL);
