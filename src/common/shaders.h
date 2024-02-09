@@ -131,7 +131,7 @@ private:
 				if (intermediate.find("uniform") == 0) {
 					pos = intermediate.find_last_of(" ");
 					size_t pos_end = intermediate.find_first_of("[") - 1;
-					if (pos_end < 0)
+					if (pos_end > intermediate.length())
 						pos_end = intermediate.length();
 					std::string uniform_name = intermediate.substr(pos + 1, pos_end - pos);
 					this->bind(uniform_name);
