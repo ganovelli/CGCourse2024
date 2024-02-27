@@ -1,6 +1,7 @@
 #pragma once
 #include <GL/glew.h>
 #include <vector>
+#include "box3.h"
 
 struct renderable {
 
@@ -27,8 +28,15 @@ struct renderable {
 	// number of indices
 	unsigned int in;
 
+	// bounding box
+	box3 bbox;
+
+	// transformation matrix
+	glm::mat4 transform;
+
 	void create() {
 		glGenVertexArrays(1, &vao);
+		transform = glm::mat4(1.f);
 	}
 
 	void bind() {
@@ -98,7 +106,7 @@ struct renderable {
 
 
 	template <class C>
-	int type_to_GL() {};
+	int type_to_GL() { return -1; };
 
 	template <class IND_TYPE>
 	GLuint add_indices(void* indices, unsigned int count, unsigned int mode) {
@@ -121,24 +129,28 @@ struct renderable {
 	*/
 	element_array operator()() {
 		if (!elements.empty()) return elements[0]; else return element_array();}
+
+	template <>
+	int type_to_GL<unsigned int>() { return GL_UNSIGNED_INT; }
+
+	template <>
+	int type_to_GL<unsigned short>() { return GL_UNSIGNED_SHORT; }
+
+	template <>
+	int type_to_GL<unsigned char>() { return GL_UNSIGNED_BYTE; }
+
+	template <>
+	GLuint add_vertex_attribute(const float* values, unsigned int count,
+		unsigned int attribute_index,
+		unsigned int num_components,
+		unsigned int stride,
+		unsigned int offset) {
+		return this->add_vertex_attribute(values, count, attribute_index, num_components, (unsigned int)GL_FLOAT, stride, offset);
+	}
 };
 
-template <>
-int renderable::type_to_GL<unsigned int>() { return GL_UNSIGNED_INT; }
-
-template <>
-int renderable::type_to_GL<unsigned short>() { return GL_UNSIGNED_SHORT; }
-
-template <>
-int renderable::type_to_GL<unsigned char>() { return GL_UNSIGNED_BYTE; }
 
 
-template <>
-GLuint renderable::add_vertex_attribute(const float* values, unsigned int count,
-	unsigned int attribute_index,
-	unsigned int num_components,
-	unsigned int stride,
-	unsigned int offset) {
-	return this->add_vertex_attribute(values, count, attribute_index, num_components, (unsigned int)GL_FLOAT, stride, offset);
-}
+
+
 

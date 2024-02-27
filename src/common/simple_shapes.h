@@ -9,6 +9,7 @@ public:
 	std::vector<float> positions;
 	std::vector<float> colors;
 	std::vector<unsigned int> indices_triangles;
+	std::vector<unsigned int> indices_edges;
 
 	unsigned int vn, fn;
 	glm::vec3 get_pos(unsigned int i) const {
@@ -23,6 +24,19 @@ public:
 
 	unsigned int * ind(unsigned int i)  { return &indices_triangles[3 * i]; }
 
+	void compute_edges() {
+		for (unsigned int i = 0; i < indices_triangles.size() / 3; ++i) {
+			indices_edges.push_back(indices_triangles[i * 3]);
+			indices_edges.push_back(indices_triangles[i * 3 + 1]);
+
+			indices_edges.push_back(indices_triangles[i * 3 + 1]);
+			indices_edges.push_back(indices_triangles[i * 3 + 2]);
+
+			indices_edges.push_back(indices_triangles[i * 3 + 2]);
+			indices_edges.push_back(indices_triangles[i * 3]);
+		}
+	}
+
 	void to_renderable(renderable & r) {
 		r.create();
 		r.add_vertex_attribute<float>(&positions[0], 3*vn, 0, 3);
@@ -33,7 +47,10 @@ public:
 		if(!indices_triangles.empty())
 			r.add_indices<GLuint>(&indices_triangles[0], (unsigned int) indices_triangles.size(), GL_TRIANGLES);
 
+		if (!indices_edges.empty())
+			r.add_indices<GLuint>(&indices_edges[0], (unsigned int)indices_edges.size(), GL_LINES);
 	}
+
 
 };
 
@@ -415,7 +432,7 @@ struct shape_maker {
 		 for (int i = 0; i < subdiv; ++i)
 		 {
 			 unsigned int cfn = ico.fn;
-			 for(int fi = 0; fi < cfn; ++fi)
+			 for(unsigned int fi = 0; fi < cfn; ++fi)
 			 {
 				 glm::vec3 me01 = (ico.get_pos(*ico.ind(fi)      ) + ico.get_pos(*(ico.ind(fi) + 1))) * 0.5f;
 				 glm::vec3 me12 = (ico.get_pos(*(ico.ind(fi) + 1)) + ico.get_pos(*(ico.ind(fi) + 2))) * 0.5f;
@@ -466,5 +483,6 @@ struct shape_maker {
 		 s.to_renderable(res);
 		 return res;
 	 }
+
 
 	};

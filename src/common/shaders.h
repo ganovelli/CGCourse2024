@@ -20,6 +20,10 @@ struct shader{
         }
 
         int operator[](std::string name){
+			if (uni.find(name) == uni.end()) {
+				std::cout << "No location for uniform variable " << name << std::endl;
+				exit(0);
+			}
             return uni[name];
         }
 #if defined(GL_VERSION_4_3)
