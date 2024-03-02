@@ -39,11 +39,15 @@ glm::mat4 trackball_matrix;
 float scaling_factor = 1.f;
 glm::mat4  scaling_matrix;
 
-glm::vec2 viewport_to_view(float pX, float pY) {
+glm::vec3 viewport_to_view(float pX, float pY) {
 	glm::vec2 res;
+	// x and y in NDC space
 	res.x = (pX / float(width))*2.f - 1.f; 
 	res.y = ((height-pY) / float(height))*2.f - 1.f;
-	return res;
+	glm::mat4 invProj = glm::inverse(proj);
+	glm::vec4 res_np = invProj*glm::vec4(res.x, res.y, -1, 1);
+	res_np /= res_np.w;
+	return glm::vec3(res_np.x, res_np.y, res_np.z);
 }
 
 /*
@@ -76,13 +80,13 @@ bool cursor_sphere_intersection(glm::vec3 & int_point, double xpos, double ypos)
 
 	bool hit = false;
 	// convert mouse position from the screen to  view space
-	glm::vec2 pos2 = viewport_to_view((float)xpos, (float)ypos);
+	glm::vec3 pos  = viewport_to_view((float)xpos, (float)ypos);
 
 	/* here build the ray, test if it intersects the sphere and, if so, 
 	write the intersection point on "int_point"
 	*/
 	glm::vec3 o = view_frame*  glm::vec4(glm::vec3(0.f, 0.f, 0.f), 1.f);
-	glm::vec3 d = view_frame*  glm::vec4(glm::vec3(pos2, -near), 0.f);
+	glm::vec3 d = view_frame*  glm::vec4( pos , 0.f);
 	glm::vec3 c = glm::vec4(glm::vec3(0.f, 0.f, 0.f), 1.f);
 
 	hit = ray_sphere_intersection(int_point, o, d, c, 2.f);
@@ -163,7 +167,7 @@ void window_size_callback(GLFWwindow* window, int _width, int _height)
 	width = _width;
 	height = _height;
 	glViewport(0, 0, width, height);
-	proj = glm::perspective(glm::radians(40.f), width / float(height), 1.5f, 20.f);
+	proj = glm::perspective(glm::radians(40.f), width / float(height), near, 20.f);
 }
 
 int main(void)
@@ -230,7 +234,7 @@ int main(void)
 	check_gl_errors(__LINE__, __FILE__);
 
 	/* Transformation to setup the point of view on the scene */
-	proj = glm::perspective(glm::radians(40.f),width/float(height), 1.5f, 20.f);
+	proj = glm::perspective(glm::radians(40.f),width/float(height), near, 20.f);
 	view = glm::lookAt(glm::vec3(0, 6, 8.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
 	view_frame = glm::inverse(view);
 
