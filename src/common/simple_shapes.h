@@ -8,6 +8,8 @@ class shape {
 public:
 	std::vector<float> positions;
 	std::vector<float> colors;
+	std::vector<float> normals;
+
 	std::vector<unsigned int> indices_triangles;
 	std::vector<unsigned int> indices_edges;
 
@@ -20,6 +22,12 @@ public:
 		positions[i * 3]	= p.x;
 		positions[i * 3+1]	= p.y;
 		positions[i * 3+2]	= p.z;
+	}
+
+	void set_norm(unsigned int i, const glm::vec3 &  p) {
+		normals[i * 3] = p.x;
+		normals[i * 3 + 1] = p.y;
+		normals[i * 3 + 2] = p.z;
 	}
 
 	unsigned int * ind(unsigned int i)  { return &indices_triangles[3 * i]; }
@@ -43,6 +51,9 @@ public:
 
 		if(!colors.empty())
 			r.add_vertex_attribute<float>(&colors[0], 3 * vn, 1, 3);
+
+		if (!normals.empty())
+			r.add_vertex_attribute<float>(&normals[0], 3 * vn, 2, 3);
 
 		if(!indices_triangles.empty())
 			r.add_indices<GLuint>(&indices_triangles[0], (unsigned int) indices_triangles.size(), GL_TRIANGLES);
@@ -257,6 +268,7 @@ struct shape_maker {
 		shape s;
 		renderable r;
 		s.positions = { -1,-1,0,  1,-1,0, 1,1,0, -1,1,0 };
+		s.normals = {0,0,1, 0,0,1, 0,0,1, 0,0,1 };
 		s.indices_triangles = { 0,1,2, 0,2,3 };
 		s.vn = 4;
 		s.fn = 2;
@@ -334,9 +346,6 @@ struct shape_maker {
 
 		// triangles defition
 		////////////////////////////////////////////////////////////
-
-
-
 		s.indices_triangles.resize((stacks)*(slices) * 2 * 3);
 		int n = 0;
 		for (unsigned int i = 0; i < stacks; ++i)
@@ -418,71 +427,125 @@ struct shape_maker {
 		s.vn = (unsigned  int)s.positions.size() / 3;
 		s.fn = (unsigned  int)s.indices_triangles.size() / 3;
 	}
-	 
-	 static void sphere(shape& ico, int subdiv){
-		 icosahedron(ico);
-		 
-		 for (unsigned int i = 0; i < ico.vn; i++)
-		 {
-			 glm::vec3 p = ico.get_pos(i);
-			 p = glm::normalize(p);
-			 ico.set_pos(i,p);
-		 }
 
-		 for (int i = 0; i < subdiv; ++i)
-		 {
-			 unsigned int cfn = ico.fn;
-			 for(unsigned int fi = 0; fi < cfn; ++fi)
-			 {
-				 glm::vec3 me01 = (ico.get_pos(*ico.ind(fi)      ) + ico.get_pos(*(ico.ind(fi) + 1))) * 0.5f;
-				 glm::vec3 me12 = (ico.get_pos(*(ico.ind(fi) + 1)) + ico.get_pos(*(ico.ind(fi) + 2))) * 0.5f;
-				 glm::vec3 me20 = (ico.get_pos(*(ico.ind(fi) + 2)) + ico.get_pos(*(ico.ind(fi) + 0))) * 0.5f;
-			
-				 ico.positions.resize(ico.positions.size() + 3 * 3 * 4);
-				 ico.set_pos(ico.vn + 0, me01);
-				 ico.set_pos(ico.vn + 1, me12);
-				 ico.set_pos(ico.vn + 2, me20);
+	static void sphere(shape& ico, int subdiv) {
+		icosahedron(ico);
 
-				 ico.set_pos(ico.vn + 3, ico.get_pos(*ico.ind(fi)));
-				 ico.set_pos(ico.vn + 4, me01);
-				 ico.set_pos(ico.vn + 5, me20);
+		for (unsigned int i = 0; i < ico.vn; i++)
+		{
+			glm::vec3 p = ico.get_pos(i);
+			p = glm::normalize(p);
+			ico.set_pos(i, p);
+		}
 
-				 ico.set_pos(ico.vn + 6, ico.get_pos(*(ico.ind(fi)+1)));
-				 ico.set_pos(ico.vn + 7, me12);
-				 ico.set_pos(ico.vn + 8, me01);
+		for (int i = 0; i < subdiv; ++i)
+		{
+			unsigned int cfn = ico.fn;
+			for (unsigned int fi = 0; fi < cfn; ++fi)
+			{
+				glm::vec3 me01 = (ico.get_pos(*ico.ind(fi)) + ico.get_pos(*(ico.ind(fi) + 1))) * 0.5f;
+				glm::vec3 me12 = (ico.get_pos(*(ico.ind(fi) + 1)) + ico.get_pos(*(ico.ind(fi) + 2))) * 0.5f;
+				glm::vec3 me20 = (ico.get_pos(*(ico.ind(fi) + 2)) + ico.get_pos(*(ico.ind(fi) + 0))) * 0.5f;
 
-				 ico.set_pos(ico.vn +  9, ico.get_pos(*(ico.ind(fi)+2)));
-				 ico.set_pos(ico.vn + 10, me20);
-				 ico.set_pos(ico.vn + 11, me12);
+				ico.positions.resize(ico.positions.size() + 3 * 3 * 4);
+				ico.set_pos(ico.vn + 0, me01);
+				ico.set_pos(ico.vn + 1, me12);
+				ico.set_pos(ico.vn + 2, me20);
 
-				 for (unsigned int fi = 0; fi < 12; ++fi)
-					 ico.indices_triangles.push_back(ico.vn + fi);
+				ico.set_pos(ico.vn + 3, ico.get_pos(*ico.ind(fi)));
+				ico.set_pos(ico.vn + 4, me01);
+				ico.set_pos(ico.vn + 5, me20);
 
-			 ico.vn += 12;
-			 ico.fn += 4;		
-			 }
+				ico.set_pos(ico.vn + 6, ico.get_pos(*(ico.ind(fi) + 1)));
+				ico.set_pos(ico.vn + 7, me12);
+				ico.set_pos(ico.vn + 8, me01);
 
-			 for (unsigned int i = 0; i < ico.vn; i++)
-			 {
-				 glm::vec3 p = ico.get_pos(i);
-				 p = glm::normalize(p);
-				 ico.set_pos(i, p);
-			 }
-			
-		 }
+				ico.set_pos(ico.vn + 9, ico.get_pos(*(ico.ind(fi) + 2)));
+				ico.set_pos(ico.vn + 10, me20);
+				ico.set_pos(ico.vn + 11, me12);
+
+				for (unsigned int fi = 0; fi < 12; ++fi)
+					ico.indices_triangles.push_back(ico.vn + fi);
+
+				ico.vn += 12;
+				ico.fn += 4;
+			}
+
+			ico.normals.resize(ico.positions.size());
+			for (unsigned int i = 0; i < ico.vn; i++)
+			{
+				glm::vec3 p = ico.get_pos(i);
+				p = glm::normalize(p);
+				ico.set_pos(i, p);
+				ico.set_norm(i, p);
+			}
+
+		}
 
 
-		 ico.vn = (unsigned  int)ico.positions.size() / 3;
-		 ico.fn = (unsigned  int)ico.indices_triangles.size() / 3;
-	 }
+		ico.vn = (unsigned  int)ico.positions.size() / 3;
+		ico.fn = (unsigned  int)ico.indices_triangles.size() / 3;
+	}
 
-	 static renderable sphere(int rec) {
-		 renderable res;
-		 shape s;
-		 sphere(s,rec);
-		 s.to_renderable(res);
-		 return res;
-	 }
+	static renderable sphere(int rec) {
+		renderable res;
+		shape s;
+		sphere(s, rec);
+		s.to_renderable(res);
+		return res;
+	}
 
+
+	static void cone(shape& s, float radius, float height, int segments) {
+		s.positions.clear();
+		s.indices_triangles.clear();
+
+		// Create vertices for the base of the cone
+		for (int i = 0; i < segments; ++i) {
+			float theta = 2.0f * glm::pi<float>() * float(i) / float(segments);
+			float x = radius * cos(theta);
+			float z = radius * sin(theta);
+
+			s.positions.push_back(x);
+			s.positions.push_back(0.0f);
+			s.positions.push_back(-z);
+		}
+
+		// Add the top vertex of the cone
+		s.positions.push_back(0.0f); // x
+		s.positions.push_back(height); // y
+		s.positions.push_back(0.0f); // z
+
+		// Create indices_triangles for the base of the cone
+		for (int i = 0; i < segments - 1; ++i) {
+			s.indices_triangles.push_back(i);
+			s.indices_triangles.push_back(i + 1);
+			s.indices_triangles.push_back(segments);
+		}
+		s.indices_triangles.push_back(segments - 1);
+		s.indices_triangles.push_back(0);
+		s.indices_triangles.push_back(segments);
+
+		// Create indices_triangles for the side faces of the cone
+		for (int i = 0; i < segments - 1; ++i) {
+			s.indices_triangles.push_back(i);
+			s.indices_triangles.push_back(i + 1);
+			s.indices_triangles.push_back(segments);
+		}
+		s.indices_triangles.push_back(segments - 1);
+		s.indices_triangles.push_back(0);
+		s.indices_triangles.push_back(segments);
+
+		s.vn = (unsigned  int)s.positions.size() / 3;
+		s.fn = (unsigned  int)s.indices_triangles.size() / 3;
+	}
+
+	static renderable cone(float radius, float height, int segments) {
+		renderable res;
+		shape s;
+		cone(s, radius,   height,   segments);
+		s.to_renderable(res);
+		return res;
+	}
 
 	};

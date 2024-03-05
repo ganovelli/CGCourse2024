@@ -1,7 +1,6 @@
 #pragma once
 #include <tinygltf/tiny_gltf.h>
 #include "renderable.h"
-#include "texture.h"
 #include "debugging.h"
 
 struct gltf_loader {
