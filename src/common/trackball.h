@@ -5,6 +5,9 @@
 
 class trackball {
 
+public: trackball() { reset(); old_tb_matrix = glm::mat4(1.f);}
+
+private:
 	/* a bool variable that indicates if we are currently rotating the trackball*/
 	bool is_trackball_dragged;
 
@@ -20,6 +23,8 @@ class trackball {
 	/* matrix to transform the scene according to the trackball: translation only*/
 	glm::mat4  translation_matrix;
 
+	/* old trackball*/
+	glm::mat4  old_tb_matrix;
 
 	float scaling_factor;
 
@@ -70,12 +75,14 @@ public:
 		scaling_factor = 1.f;
 		scaling_matrix = glm::mat4(1.f);
 		rotation_matrix = glm::mat4(1.f);
+		translation_matrix = glm::mat4(1.f);
 	}
 	void set_center_radius(glm::vec3 c, float r) {
+		old_tb_matrix = this->matrix();
+		reset();
 		center = c;
 		radius = r;
-		translation_matrix = glm::translate(glm::mat4(1.f), center);
-		reset();
+		translation_matrix =   glm::translate(glm::mat4(1.f), center);
 	}
 
 
@@ -115,6 +122,6 @@ public:
 	}
 
 	glm::mat4 matrix() {
-		return translation_matrix*scaling_matrix* rotation_matrix*glm::inverse(translation_matrix);
+		return translation_matrix*scaling_matrix* rotation_matrix*glm::inverse(translation_matrix)*this->old_tb_matrix;
 	}
 };

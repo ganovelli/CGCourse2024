@@ -1,5 +1,8 @@
 #pragma once
 #include <tinygltf/tiny_gltf.h>
+
+
+#include "texture.h"
 #include "renderable.h"
 #include "debugging.h"
 
@@ -12,6 +15,7 @@ struct gltf_loader {
 	std::string warn;
 
 	std::vector<renderable> rs;
+	std::vector<GLuint> id_textures;
 	int n_vert, n_tri;
 
 	static std::string GetFilePathExtension(const std::string& FileName) {
@@ -112,6 +116,11 @@ struct gltf_loader {
 					if (it->first.compare("POSITION") == 0) attr_index = 0;
 					if (it->first.compare("COLOR") == 0)    attr_index = 1;
 					if (it->first.compare("NORMAL") == 0)   attr_index = 2;
+					if (it->first.compare("TANGENT") == 0)   attr_index = 3;
+					if (it->first.find("TEXCOORD_") != std::string::npos) {
+						std::string n = it->first.substr(9, 3);
+						attr_index = 4+ atoi(n.c_str());
+					}
 
 					if (attr_index != -1) {
 
@@ -121,12 +130,16 @@ struct gltf_loader {
 						assert(byteStride != -1);
 
 						n_vert = (int) accessor.count;
+						int n_comp = accessor.type; // only consider vec2, vec3 and vec4 (TINYGLTF_TYPE_VEC* ) 
 
 						size_t buffer = model.bufferViews[accessor.bufferView].buffer;
 						size_t bufferviewOffset = model.bufferViews[accessor.bufferView].byteOffset;
 
-						r.add_vertex_attribute<float>((float*)& model.buffers[buffer].data[bufferviewOffset + accessor.byteOffset], 3 * n_vert, attr_index, 3);
-
+						switch (accessor.componentType) {
+							case TINYGLTF_PARAMETER_TYPE_FLOAT: r.add_vertex_attribute<float>((float*)&model.buffers[buffer].data[bufferviewOffset + accessor.byteOffset], n_comp * n_vert, attr_index, n_comp);break;
+							case TINYGLTF_PARAMETER_TYPE_BYTE: r.add_vertex_attribute<char>((char*)&model.buffers[buffer].data[bufferviewOffset + accessor.byteOffset], n_comp * n_vert, attr_index, n_comp);break;
+							case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: r.add_vertex_attribute<unsigned char>((unsigned char*)&model.buffers[buffer].data[bufferviewOffset + accessor.byteOffset], n_comp * n_vert, attr_index, n_comp);break;
+						}
 						// if the are the position compute the object bounding box
 						if (attr_index == 0) {
 							float * v_ptr = (float*)& model.buffers[buffer].data[bufferviewOffset + accessor.byteOffset];
@@ -181,6 +194,21 @@ struct gltf_loader {
 				}
 
 				check_gl_errors(__LINE__, __FILE__);
+
+				// setup the material
+				tinygltf::Material mat = model.materials[primitive.material];
+				int index;
+				
+				index = mat.pbrMetallicRoughness.baseColorTexture.index;
+				r.mater.base_color_texture = (index != -1)?this->id_textures[index]: this->id_textures[0];
+
+				index = mat.normalTexture.index;
+				r.mater.normal_texture = (index != -1) ? this->id_textures[index] : -1;
+
+				index = mat.emissiveTexture.index;
+				r.mater.emissive_texture = (index != -1) ? this->id_textures[index] : -1;
+
+
 			}
 			//	return true;
 		}
@@ -193,6 +221,57 @@ struct gltf_loader {
 		unsigned char * _data = 0;
 		tinygltf::Mesh* mesh_ptr = 0;
 		assert(model.scenes.size() > 0);
+
+		check_gl_errors(__LINE__, __FILE__);
+
+
+		// load texture
+		for (unsigned int it = 0; it < model.textures.size(); ++it) {
+			tinygltf::Texture& texture = model.textures[it];
+			tinygltf::Sampler sampler = model.samplers[model.textures[it].sampler];
+			tinygltf::Image  image = model.images[model.textures[it].source];
+
+
+
+			int gl_format;
+			switch (image.component) {
+			case 1: gl_format = GL_ALPHA;	break;
+			case 3: gl_format = GL_RGB;		break;
+			case 4: gl_format = GL_RGBA;	break;
+			default: assert(0);
+			}
+
+			// decode the image
+			tinygltf::BufferView bufferview = model.bufferViews[image.bufferView];
+
+			tinygltf::Buffer buffer = model.buffers[bufferview.buffer];
+			unsigned char* v_ptr = &buffer.data[bufferview.byteOffset];
+
+			int x, y;
+			int  channels_in_file;
+			stbi_uc* data = stbi_load_from_memory(v_ptr, (int)bufferview.byteLength, &x, &y, &channels_in_file, image.component);
+
+//			stbi_write_png("read_texture.png", x, y, 4, data, 0);
+
+			id_textures.push_back(0);
+			glGenTextures(1, &id_textures.back());
+
+			glBindTexture(GL_TEXTURE_2D, id_textures.back());
+			glTexImage2D(GL_TEXTURE_2D, 0, gl_format, image.width, image.height, 0, gl_format, image.pixel_type, data);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter);
+
+			if (sampler.minFilter == TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST ||
+				sampler.minFilter == TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST ||
+				sampler.minFilter == TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR ||
+				sampler.minFilter == TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR
+				)
+				glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		check_gl_errors(__LINE__, __FILE__);
+
 
 		// just look for the first mesh 
 		int scene_to_display = model.defaultScene > -1 ? model.defaultScene : 0;
