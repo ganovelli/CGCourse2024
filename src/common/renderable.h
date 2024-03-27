@@ -12,6 +12,7 @@ struct material {
 	float roughness_factor;
 	GLint normal_texture;
 	GLint emissive_texture;
+
 };
 
 
@@ -46,7 +47,6 @@ struct renderable {
 	// transformation matrix
 	glm::mat4 transform;
 
-	// material of the object
 	material mater;
 
 	void create() {
@@ -91,7 +91,7 @@ struct renderable {
 		unsigned int stride = 0,
 		unsigned int offset = 0) {
 
-		vn = count;
+		vn = count/ num_components;
 
 		glBindVertexArray(vao);
 

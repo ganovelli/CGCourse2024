@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+   <TITLE>class  race</TITLE>
+   <META NAME="GENERATOR" CONTENT="DOC++ 3.4.10">
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H2>class  <A HREF="#DOC.DOCU">race</A></H2></H2><BLOCKQUOTE> a race is a scene with some static (terrain, trees, lamps) and some dynamic components (cars, cameramen, sunlight direction) </BLOCKQUOTE>
+<HR>
+
+<DL>
+<P><DL>
+<DT><H3>Public Methods</H3><DD><DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const box3&amp; <B><A HREF="#DOC.1.5.1">bbox</A></B>() const 
+<DD><I>bounding box of the whole scene</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const <!1><A HREF="terrain.html">terrain</A>&amp; <B><A HREF="#DOC.1.5.2">ter</A></B>() const 
+<DD><I>terrain height field</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const <!1><A HREF="track.html">track</A>&amp; <B><A HREF="#DOC.1.5.3">t</A></B>() const 
+<DD><I>race track</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const glm::vec3&amp; <B><A HREF="#DOC.1.5.4">sunlight_direction</A></B>() const 
+<DD><I>sunlight direction.</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const std::vector&lt;stick_object&gt; &amp; <B><A HREF="#DOC.1.5.5">trees</A></B>() const 
+<DD><I>a vector of trees</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const std::vector&lt;stick_object&gt; &amp; <B><A HREF="#DOC.1.5.6">lamps</A></B>() const 
+<DD><I>a vector of lamps</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const std::vector&lt;<!1><A HREF="cameraman.html">cameraman</A>&gt; &amp; <B><A HREF="#DOC.1.5.7">cameramen</A></B>() const 
+<DD><I>a vector of cameramen</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>const std::vector&lt;<!1><A HREF="car.html">car</A>&gt; &amp; <B><A HREF="#DOC.1.5.8">cars</A></B>() const 
+<DD><I>a vector of cars</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>void <B><A HREF="#DOC.1.5.11">start</A></B>( int h = -1, int m = -1, int s = -1, int _sim_time_ratio = 60)
+<DD><I> starts the carousel </I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>void <B><A HREF="#DOC.1.5.12">add_car</A></B>(int <!1><A HREF="car.html#DOC.1.3.3">id_path</A>, float delta = -1)
+<DD><I> add a car to the carousel </I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>void <B><A HREF="#DOC.1.5.13">add_car</A></B>(float delta = -1)
+<DD><I> add a car to the carousel.</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>void <B><A HREF="#DOC.1.5.14">update</A></B>()
+<DD><I> update the carousel.</I>
+</DL></P>
+
+</DL>
+
+<A NAME="DOC.DOCU"></A>
+<HR>
+<H2>Documentation</H2>
+<BLOCKQUOTE>
+a race is a scene with some static (terrain, trees, lamps) and some dynamic components (cars, cameramen, sunlight direction) </BLOCKQUOTE>
+<DL>
+
+<A NAME="bbox"></A>
+<A NAME="DOC.1.5.1"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const box3&amp; bbox() const </B></TT>
+<DD>bounding box of the whole scene
+<DL><DT><DD></DL><P>
+<A NAME="ter"></A>
+<A NAME="DOC.1.5.2"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const <!1><A HREF="terrain.html">terrain</A>&amp; ter() const </B></TT>
+<DD>terrain height field
+<DL><DT><DD></DL><P>
+<A NAME="t"></A>
+<A NAME="DOC.1.5.3"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const <!1><A HREF="track.html">track</A>&amp; t() const </B></TT>
+<DD>race track
+<DL><DT><DD></DL><P>
+<A NAME="sunlight_direction"></A>
+<A NAME="DOC.1.5.4"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const glm::vec3&amp; sunlight_direction() const </B></TT>
+<DD>sunlight direction. It changes with time
+<DL><DT><DD></DL><P>
+<A NAME="trees"></A>
+<A NAME="DOC.1.5.5"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const std::vector&lt;stick_object&gt; &amp; trees() const </B></TT>
+<DD>a vector of trees
+<DL><DT><DD></DL><P>
+<A NAME="lamps"></A>
+<A NAME="DOC.1.5.6"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const std::vector&lt;stick_object&gt; &amp; lamps() const </B></TT>
+<DD>a vector of lamps
+<DL><DT><DD></DL><P>
+<A NAME="cameramen"></A>
+<A NAME="DOC.1.5.7"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const std::vector&lt;<!1><A HREF="cameraman.html">cameraman</A>&gt; &amp; cameramen() const </B></TT>
+<DD>a vector of cameramen
+<DL><DT><DD></DL><P>
+<A NAME="cars"></A>
+<A NAME="DOC.1.5.8"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>const std::vector&lt;<!1><A HREF="car.html">car</A>&gt; &amp; cars() const </B></TT>
+<DD>a vector of cars
+<DL><DT><DD></DL><P>
+<A NAME="start"></A>
+<A NAME="DOC.1.5.11"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>void start( int h = -1, int m = -1, int s = -1, int _sim_time_ratio = 60)</B></TT>
+<DD>
+starts the carousel
+
+<DL><DT><DT><B>Parameters:</B><DD><B>hour</B> -   
+<BR><B>minute</B> -   
+<BR><B>second</B> -   
+<BR><B>ratio</B> -  between the actual time and the simulated time for the sunlight direction<BR><DD></DL><P>
+<A NAME="add_car"></A>
+<A NAME="DOC.1.5.12"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>void add_car(int <!1><A HREF="car.html#DOC.1.3.3">id_path</A>, float delta = -1)</B></TT>
+<DD>
+add a car to the carousel
+
+<DL><DT><DT><B>Parameters:</B><DD><B></B> - <!1><A HREF="car.html#DOC.1.3.3">id_path</A> add it to a specific path
+<BR><B>delta</B> -  shift the starting point along the path
+<BR><DD></DL><P>
+<A NAME="add_car"></A>
+<A NAME="DOC.1.5.13"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>void add_car(float delta = -1)</B></TT>
+<DD>
+add a car to the carousel.
+
+<P>
+<DL><DT><DT><B>Parameters:</B><DD><B>delta</B> -  shift the starting point along the path<BR><DD></DL><P>
+<A NAME="update"></A>
+<A NAME="DOC.1.5.14"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>void update()</B></TT>
+<DD>
+update the carousel. Call this at the beginning of any render cycle
+
+<DL><DT><DD></DL><P></DL>
+
+<HR><DL><DT><B>This class has no child classes.</B></DL>
+
+<DL><DT><DT><B>Friends:</B><DD>  carousel_loader<BR><DD></DL><P><P><I><A HREF="index.html">Alphabetic index</A></I> <I><A HREF="HIER.html">HTML hierarchy of classes</A> or <A HREF="HIERjava.html">Java</A></I></P><HR>
+<BR>
+This page was generated with the help of <A HREF="http://docpp.sourceforge.net">DOC++</A>.
+</BODY>
+</HTML>

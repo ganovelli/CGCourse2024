@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+   <TITLE>struct  terrain</TITLE>
+   <META NAME="GENERATOR" CONTENT="DOC++ 3.4.10">
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H2>struct  <A HREF="#DOC.DOCU">terrain</A></H2></H2><BLOCKQUOTE> the terrain is a height field, that is, an height value (y) for each (x,z) coordinates</BLOCKQUOTE>
+
+<HR>
+<P><DL>
+ <DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>std::vector&lt;unsigned char&gt;  <B><A HREF="#DOC.1.4.1">height_field</A></B>
+<DD><I>terrain specified as an height field</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>glm::vec4 <B><A HREF="#DOC.1.4.2">rect_xz</A></B>
+<DD><I>rectangle in xz where the terrain is located (minx,miny,sizex,sizey)</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>glm::ivec2 <B><A HREF="#DOC.1.4.3">size_pix</A></B>
+<DD><I>size in pixels of the height field image</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>glm::vec3 <B><A HREF="#DOC.1.4.4">p</A></B>(glm::vec3 p_in)
+<DD><I>given a 3D point, returns its orthogonal projection into the terrain (that is, along the y direction)</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>float <B><A HREF="#DOC.1.4.5">y</A></B>(float x, float z) const 
+<DD><I>given the x and z coordinates, returns the height of the terrain in (x,z)</I>
+</DL></P>
+
+
+<A NAME="DOC.DOCU"></A>
+<HR>
+<H2>Documentation</H2>
+<BLOCKQUOTE>
+the terrain is a height field, that is, an height value (y) for each (x,z) coordinates</BLOCKQUOTE>
+<DL>
+
+<A NAME="height_field"></A>
+<A NAME="DOC.1.4.1"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>std::vector&lt;unsigned char&gt;  height_field</B></TT>
+<DD>terrain specified as an height field
+<DL><DT><DD></DL><P>
+<A NAME="rect_xz"></A>
+<A NAME="DOC.1.4.2"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>glm::vec4 rect_xz</B></TT>
+<DD>rectangle in xz where the terrain is located (minx,miny,sizex,sizey)
+<DL><DT><DD></DL><P>
+<A NAME="size_pix"></A>
+<A NAME="DOC.1.4.3"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>glm::ivec2 size_pix</B></TT>
+<DD>size in pixels of the height field image
+<DL><DT><DD></DL><P>
+<A NAME="p"></A>
+<A NAME="DOC.1.4.4"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>glm::vec3 p(glm::vec3 p_in)</B></TT>
+<DD>given a 3D point, returns its orthogonal projection into the terrain (that is, along the y direction)
+<DL><DT><DD></DL><P>
+<A NAME="y"></A>
+<A NAME="DOC.1.4.5"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>float y(float x, float z) const </B></TT>
+<DD>given the x and z coordinates, returns the height of the terrain in (x,z)
+<DL><DT><DD></DL><P></DL>
+<DL><DT><DD></DL><P><P><I><A HREF="index.html">Alphabetic index</A></I> <I><A HREF="HIER.html">HTML hierarchy of classes</A> or <A HREF="HIERjava.html">Java</A></I></P><HR>
+<BR>
+This page was generated with the help of <A HREF="http://docpp.sourceforge.net">DOC++</A>.
+</BODY>
+</HTML>

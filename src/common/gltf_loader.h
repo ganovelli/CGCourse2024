@@ -52,21 +52,11 @@ struct gltf_loader {
 	}
 
 	void visit_node(glm::mat4  currT, int i_node) {
-		if (!model.nodes[i_node].children.empty()) {
-			const std::vector<double> & m = model.nodes[i_node].matrix;
-			if (!m.empty())
-				currT = currT * glm::mat4(m[0], m[1], m[2], m[3],
-					m[4], m[5], m[6], m[7],
-					m[8], m[9], m[10], m[11],
-					m[12], m[13], m[14], m[15]);
-			assert(model.nodes[i_node].mesh == -1); // a node with chidren does not have mesh
-			for (unsigned int ic = 0; ic < model.nodes[i_node].children.size(); ++ic)
-				visit_node(currT, model.nodes[i_node].children[ic]);
-		}
-		else {
-			if (model.nodes[i_node].mesh == -1)
-				return;
 
+ 
+			if (model.nodes[i_node].mesh != -1)
+			{
+			
 			tinygltf::Mesh* mesh_ptr = mesh_ptr = &model.meshes[model.nodes[i_node].mesh];
 
 			const std::vector<double> & m = model.nodes[i_node].matrix;
@@ -207,10 +197,17 @@ struct gltf_loader {
 
 				index = mat.emissiveTexture.index;
 				r.mater.emissive_texture = (index != -1) ? this->id_textures[index] : -1;
-
-
 			}
-			//	return true;
+		}
+		if (!model.nodes[i_node].children.empty()) {
+			const std::vector<double>& m = model.nodes[i_node].matrix;
+			if (!m.empty())
+				currT = currT * glm::mat4(m[0], m[1], m[2], m[3],
+					m[4], m[5], m[6], m[7],
+					m[8], m[9], m[10], m[11],
+					m[12], m[13], m[14], m[15]);
+			for (unsigned int ic = 0; ic < model.nodes[i_node].children.size(); ++ic)
+				visit_node(currT, model.nodes[i_node].children[ic]);
 		}
 	}
 
@@ -249,7 +246,7 @@ struct gltf_loader {
 
 			int x, y;
 			int  channels_in_file;
-			stbi_uc* data = stbi_load_from_memory(v_ptr, (int)bufferview.byteLength, &x, &y, &channels_in_file, image.component);
+			stbi_uc* data = stbi_load_from_memory(v_ptr, bufferview.byteLength, &x, &y, &channels_in_file, image.component);
 
 //			stbi_write_png("read_texture.png", x, y, 4, data, 0);
 
