@@ -19,7 +19,11 @@ struct shader{
             uni[name] = glGetUniformLocation(program, name.c_str());
         }
 
-        int operator[](std::string name){
+		const bool has_uniform(std::string name) const  {
+			return (uni.find(name) != uni.end());
+		}
+		
+		int operator[](std::string name){
 			if (uni.find(name) == uni.end()) {
 				std::cout << "No location for uniform variable " << name << std::endl;
 				exit(0);

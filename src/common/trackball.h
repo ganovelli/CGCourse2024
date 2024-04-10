@@ -11,6 +11,9 @@ private:
 	/* a bool variable that indicates if we are currently rotating the trackball*/
 	bool is_trackball_dragged;
 
+	/* a bool variable that indicates if the transformation has been changed since last time it was check*/
+	bool changed;
+
 	/* p0 and p1 points on the sphere */
 	glm::vec3 p0, p1;
 
@@ -117,11 +120,24 @@ public:
 	}
 	void mouse_scroll(double xoffset, double yoffset)
 	{
+		changed = true;
 		scaling_factor *= (float)((yoffset>0) ? 1.1 : 0.97);
 		scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor, scaling_factor, scaling_factor));
 	}
 
 	glm::mat4 matrix() {
 		return translation_matrix*scaling_matrix* rotation_matrix*glm::inverse(translation_matrix)*this->old_tb_matrix;
+	}
+
+	bool is_moving() {
+		return is_trackball_dragged;
+	}
+
+	bool is_changed() {
+		if (changed || is_trackball_dragged) {
+			changed = false;
+			return true;
+		}
+		return false;
 	}
 };
