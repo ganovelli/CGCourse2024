@@ -125,6 +125,7 @@ struct renderable {
 		if (std::is_same<C,   char >()) return GL_BYTE;
 		if (std::is_same<C,  float >()) return GL_FLOAT;
 		assert(-1);
+		return -1;
 	 };
 
 	template <class IND_TYPE>
