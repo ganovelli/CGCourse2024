@@ -8,6 +8,8 @@ uniform int iTime;
 #define MAX_BOUNCES 4
 #define LAMBERTIAN 0
 #define EMISSIVE 1
+#define METAL 2
+#define DIELECTRIC 3
 
 vec3 background_color;
 
@@ -179,6 +181,8 @@ Ray primaryRay( in vec2 winpos ) {
     r.dir = normalize((uModel_inv * uView_inv *vec4(r.dir,0)).xyz);
     r.pos   = (uModel_inv * uView_inv *vec4(r.pos,1.0)).xyz;
 
+//    r.dir.z = -near;
+//    r.dir = normalize( r.dir );
      return r;
 }
 
@@ -208,6 +212,7 @@ bool inShadow(in hit_info nfo){
     r.dir = normalize(point_light-nfo.point);
     r.pos = nfo.point;
     return hit_scene(r,0.001,length(point_light-nfo.point),  _);
+    
 }
 
 vec3 direct_area_lighting(in hit_info nfo){
@@ -222,9 +227,11 @@ vec3 direct_area_lighting(in hit_info nfo){
     float area = 2.0;
     float contr = 0.0;
     if(!hit_scene(r,0.001,0.99*length(light_pos-nfo.point)+0.0001,  _))
-      contr = area * r.dir.y * dot(nfo.normal, r.dir) / (3.1415 * dot(s,s));
+      contr = area * r.dir.y * dot(nfo.normal, r.dir) / (3.14 * dot(s,s));
     return contr*area_light.mat.albedo;
 }
+
+
 
 
 vec3 direct_lighting(in hit_info nfo){
@@ -269,6 +276,8 @@ vec3 color(in Ray r){
         }
          else
         {
+           //float t = .5*r.dir.y + .5;
+          // col *= mix(vec3(1),vec3(.5,.7,1), t);
            col=vec3(0);
         }
          
@@ -280,10 +289,10 @@ vec3 color(in Ray r){
 
 void main()
 {	vec2 fragCoord;
-    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy/1);
 	
-    fragCoord.x = float(texelCoord.x)/(uResolution.x);
-    fragCoord.y = float(texelCoord.y)/(uResolution.y);
+    fragCoord.x = float(texelCoord.x)/(gl_NumWorkGroups.x);
+    fragCoord.y = float(texelCoord.y)/(gl_NumWorkGroups.y);
 
     g_seed = float(base_hash(floatBitsToUint(fragCoord)))/float(0xffffffffU)+iTime;
 
@@ -297,8 +306,8 @@ void main()
     Ray r = primaryRay( texelCoord );
     vec3 col = color(r); 
 
-    vec4 curr = imageLoad(imgOutput,texelCoord);
-    curr  =  curr + vec4(col,1.0); 
+     vec4 curr = imageLoad(imgOutput,texelCoord);
+     curr  =  curr + vec4(col,1.0); 
 
     imageStore(imgOutput, texelCoord, curr);
 }

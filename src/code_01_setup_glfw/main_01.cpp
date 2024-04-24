@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
  
+/* printout few basic info about your hardware*/
 void printout_opengl_glsl_info() {
     const GLubyte* renderer		= glGetString(GL_RENDERER);
     const GLubyte* vendor		= glGetString(GL_VENDOR);
@@ -44,6 +45,8 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
+
+		/* clear the color buffer */
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBegin(GL_TRIANGLES);

@@ -1,0 +1,20 @@
+TEMPLATE = subdirs
+SUBDIRS += code_01_setup_glfw/code_01_setup_glfw.pro\
+code_02_my_first_triangle/code_02_my_first_triangle.pro\
+code_03_wrapping_shaders_buffers/code_03_wrapping_shaders_buffers.pro\
+code_04_transformations_pipeline/code_04_transformations_pipeline.pro\
+code_05_my_first_car/code_05_my_first_car.pro\
+code_06_rotation_interpolation/code_06_rotation_interpolation.pro\
+code_07_manipulation/code_07_manipulation.pro\
+code_08_raster/code_08_raster.pro\
+code_09_gltfloader/code_09_gltfloader.pro\
+code_10_phong_shading/code_10_phong_shading.pro\
+code_11_texture_bump_mapping/code_11_texture_bump_mapping.pro\
+code_12_onthefly_coordinates/code_12_onthefly_coordinates.pro\
+code_13_shadows/code_13_shadows.pro\
+code_14_ambient_obscurance/code_14_ambient_obscurance.pro\
+code_15_gpu_raytracing/code_15_gpu_raytracing.pro\
+code_16_gpu_volume_rendering/code_16_gpu_volume_rendering.pro\
+code_game/code_game.pro
+
+CONFIG += ordered

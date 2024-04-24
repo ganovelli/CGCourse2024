@@ -3,17 +3,15 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include <conio.h>
-#include <direct.h>
 
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
-#include "..\common\matrix_stack.h"
-#include "..\common\intersection.h"
-#include "..\common\trackball.h"
-#include "..\common\frame_buffer_object.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
+#include "../common/matrix_stack.h"
+#include "../common/intersection.h"
+#include "../common/trackball.h"
+#include "../common/frame_buffer_object.h"
 
 /*
 GLM library for math  https://github.com/g-truc/glm
@@ -187,7 +185,6 @@ int main(int argc, char ** argv)
 	glUseProgram(rt_shader.program);
 	glUniformMatrix4fv(rt_shader["uProj_inv"], 1, GL_FALSE, &proj_inv[0][0]);
 	glUniform2i(rt_shader["uResolution"], width, height);
-	int _ = true;
 
 	frame_buffer_object fbo;
 	fbo.create(width, height);
@@ -197,7 +194,7 @@ int main(int argc, char ** argv)
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
-		if (clock() - cstart > 1000) {
+                if (clock() - cstart > CLOCKS_PER_SEC ) {
 			std::cout << nf << std::endl;
 			nf = 0;
 			cstart = clock();
@@ -230,7 +227,7 @@ int main(int argc, char ** argv)
 		check_gl_errors(__LINE__, __FILE__, false);
 		glUseProgram(rt_shader.program);
 		glUniform1i(iTime_loc, clock());
-		glDispatchCompute((unsigned int)width, (unsigned int)height, 1);
+		glDispatchCompute((unsigned int)width/32, (unsigned int)height/32, 1);
 		check_gl_errors(__LINE__, __FILE__,false);
 		
 

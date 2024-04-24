@@ -1,0 +1,202 @@
+#version 460 core
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout(rgba32f, binding = 0) uniform image2D imgOutput;
+uniform int iTime;
+
+uniform sampler3D uVolume;
+uniform sampler1D uTF;
+
+uniform vec3 uNCells;
+vec3 background_color;
+
+uniform ivec2 uResolution;
+
+uniform mat4 uProj_inv;
+uniform mat4 uView_inv;
+uniform mat4 uModel_inv;
+uniform int uMaxSteps;
+
+vec3 hsv2rgb(vec3 c)
+{
+	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+vec4 transfer_function(float v){
+	return vec4(hsv2rgb(vec3(v,v,4*v)), v*v*v);
+}
+
+uint base_hash(uvec2 p) {
+    p = 1103515245U*((p >> 1U)^(p.yx));
+    uint h32 = 1103515245U*((p.x)^(p.y>>3U));
+    return h32^(h32 >> 16);
+}
+
+float g_seed = 0.;
+
+vec2 hash2(inout float seed) {
+    uint n = base_hash(floatBitsToUint(vec2(seed+=.1,seed+=.1)));
+    uvec2 rz = uvec2(n, n*48271U);
+    return vec2(rz.xy & uvec2(0x7fffffffU))/float(0x7fffffff);
+}
+
+vec3 hash3(inout float seed) {
+    uint n = base_hash(floatBitsToUint(vec2(seed+=.1,seed+=.1)));
+    uvec3 rz = uvec3(n, n*16807U, n*48271U);
+    return vec3(rz & uvec3(0x7fffffffU))/float(0x7fffffff);
+}
+
+vec3 random_in_unit_sphere(inout float seed) {
+    vec3 h = hash3(seed) * vec3(2.,6.28318530718,1.)-vec3(1,0,0);
+    float phi = h.y;
+    float r = pow(h.z, 1./3.);
+	return r * vec3(sqrt(1.-h.x*h.x)*vec2(sin(phi),cos(phi)),h.x);
+}
+
+mat3 create_axes(in vec3 x_axis, in vec3 norm){
+    mat3 axes;
+    axes[0] = normalize(x_axis);
+    vec3 y_axis = normalize(cross(norm,axes[0]));
+    vec3 z_axis = normalize(cross(axes[0],y_axis));
+
+    axes[1] = y_axis;
+    axes[2] = z_axis;
+    axes = transpose(axes);
+    return axes;
+}
+
+struct Ray{
+    vec3 pos;
+    vec3 dir; // unitary!
+};
+
+Ray primaryRay( in vec2 winpos ) {
+    winpos = winpos-vec2(0.5);//+hash2(g_seed);
+    
+    Ray r;
+    r.dir.x = (winpos.x - uResolution.x / 2.0) / (uResolution.x / 2.0);
+    r.dir.y = (winpos.y - uResolution.y / 2.0) / (uResolution.x / 2.0);
+
+    vec4 p0 = uProj_inv*vec4(r.dir.x,r.dir.y,-1.0,1.0);
+    p0/=p0.w;
+
+    vec4 p1 = uProj_inv*vec4(r.dir.x,r.dir.y, 1.0,1.0);
+    p1/=p1.w;
+
+    r.dir = normalize((p1-p0).xyz);
+
+    r.dir = normalize((uModel_inv * uView_inv *vec4(r.dir,0)).xyz);
+    r.pos   = (uModel_inv * uView_inv * p0 ).xyz;
+
+     return r;
+}
+
+
+float  intersect_cube(Ray r,vec3 corner, vec3  size){
+
+    float mins[3];
+    float maxs[3];
+    float a,b;
+    a = (  corner.x				- r.pos.x ) / r.dir.x;
+    b = (  corner.x + size.x	- r.pos.x ) / r.dir.x;
+
+    if(a < b ) {mins[0] = a; maxs[0] = b;} else {mins[0] = b; maxs[0] = a;}
+
+    a = (  corner.y - r.pos.y ) / r.dir.y;
+    b = (  corner.y + size.y -  r.pos.y  ) / r.dir.y;
+ 
+    if(a < b ) {mins[1] = a; maxs[1] = b;} else {mins[1] = b; maxs[1] = a;}
+
+    a = (  corner.z - r.pos.z ) / r.dir.z;
+    b = (  corner.z + size.z -  r.pos.z   ) / r.dir.z;
+ 
+    if(a < b ) {mins[2] = a; maxs[2] = b;} else {mins[2] = b; maxs[2] = a;}
+
+    float last_entry = mins[0];
+    if(mins[1] > last_entry) last_entry = mins[1];
+    if(mins[2] > last_entry) last_entry = mins[2];
+
+    float first_exit = maxs[0];
+    if(maxs[1] < first_exit) first_exit = maxs[1];
+    if(maxs[2] < first_exit) first_exit = maxs[2];
+
+     
+    return (( first_exit > last_entry )&& (first_exit > 0))?  last_entry :-1.f;
+}
+
+
+
+vec4 raycast_grid(Ray r,  vec3 pf, float thmin,float thmax){
+	
+	vec3 p = vec3(floor(pf.x),floor(pf.y),floor(pf.z)); 
+
+	vec3 delta =  vec3(1.f/abs(r.dir.x),1.f/abs(r.dir.y),1.f/abs(r.dir.z));
+	
+	vec3 next_t = delta;
+
+	vec3 step = vec3(sign(r.dir.x),sign(r.dir.y),sign(r.dir.z));
+
+	float opacity = 0.f;
+	vec3  cumulativeRGB = vec3(0,0,0);
+
+	 
+
+	int cnt=0;
+	while(	cnt++ < uMaxSteps && 
+			(p.x >= -1) && (p.x <=  uNCells.x+1)  && 
+			(p.y >= -1) && (p.y <=  uNCells.y+1)  && 
+			(p.z >= -1) && (p.z <=  uNCells.z+1) ){
+		 
+			// find the closest next_t
+			int im = 0;
+			if(next_t[1] < next_t[0])  im = 1;
+			if(next_t[2] < next_t[im]) im = 2;
+			
+			// advance until the closest next_t
+			p[im] = p[im] + step[im];
+
+			// update next_t
+			next_t[im] = next_t[im] + delta[im];
+			float v = texture(uVolume,p/uNCells).x;
+			
+			vec4 col_opa = transfer_function(v);
+			
+			opacity			= opacity		 + (1.0-opacity)* col_opa.w;
+			cumulativeRGB	= cumulativeRGB  + (1.f-opacity)* col_opa.rgb*col_opa.w ;
+			}
+
+	return vec4(cumulativeRGB,1.0);
+}
+
+void main()
+{	vec2 fragCoord;
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+	
+    fragCoord.x = float(texelCoord.x)/(uResolution.x);
+    fragCoord.y = float(texelCoord.y)/(uResolution.y);
+
+    g_seed = float(base_hash(floatBitsToUint(fragCoord)))/float(0xffffffffU)+iTime;
+
+    vec4 col = vec4(0.0, 0.5, 0.6,1.0);
+    vec2 tc;
+
+    Ray r = primaryRay( texelCoord );
+      
+   	float t = intersect_cube(r, vec3(0,0,0),uNCells);
+	 
+	if(t>0)
+		{ 
+			vec3 p = r.pos + t*r.dir;
+ 			col =  raycast_grid(r,p,0.4,0.55) ;
+		}
+
+    // vec4 curr = imageLoad(imgOutput,texelCoord);
+    // curr  =  curr + vec4(col,1.0); 
+
+	vec4 curr = vec4(col.xyz*col.w,1.0);
+
+    imageStore(imgOutput, texelCoord, curr);
+}
+
+

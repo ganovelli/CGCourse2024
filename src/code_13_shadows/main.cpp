@@ -3,8 +3,6 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include <conio.h>
-#include <direct.h>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -13,16 +11,16 @@
 #include <stb_image.h>
 
 
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
-#include "..\common\matrix_stack.h"
-#include "..\common\intersection.h"
-#include "..\common\trackball.h"
-#include "..\common\view_manipulator.h"
-#include "..\common\texture.h"
-#include "..\common\frame_buffer_object.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
+#include "../common/matrix_stack.h"
+#include "../common/intersection.h"
+#include "../common/trackball.h"
+#include "../common/view_manipulator.h"
+#include "../common/texture.h"
+#include "../common/frame_buffer_object.h"
 
 
 /*
@@ -51,8 +49,7 @@ struct projector {
 	glm::mat4 set_projection(glm::mat4 _view_matrix, box3 box) {
 		view_matrix = _view_matrix;
 
-		/* EXERCISE: 
-		* set the view volume properly so that they are a close fit of the 
+		/* TBD: set the view volume properly so that they are a close fit of the 
 		bounding box passed as parameter */
 		proj_matrix =  glm::ortho(-4.f, 4.f, -4.f, 4.f,0.f, distance_light*2.f);
 //		proj_matrix = glm::perspective(3.14f/2.f,1.0f,0.1f, distance_light*2.f);
@@ -219,13 +216,13 @@ void gui_setup() {
 }
 
 void draw_torus(  shader & sh) {
-	glUniformMatrix4fv(sh["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+	glUniformMatrix4fv(sh["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 	r_torus.bind();
 	glDrawElements(r_torus().mode, r_torus().count, r_torus().itype, 0);
 }
 
 void draw_plane(  shader & sh) {
-	glUniformMatrix4fv(sh["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+	glUniformMatrix4fv(sh["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 	r_plane.bind();
 	glDrawElements(r_plane().mode, r_plane().count, r_plane().itype, 0);
 
@@ -238,13 +235,13 @@ void draw_pole(shader & sh) {
 }
 
 void draw_sphere(  shader & sh) {
-	glUniformMatrix4fv(sh["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+	glUniformMatrix4fv(sh["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 	r_sphere.bind();
 	glDrawElements(r_sphere().mode, r_sphere().count, r_sphere().itype, 0);
 }
 
 void draw_cube(shader & sh) {
-	glUniformMatrix4fv(sh["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+	glUniformMatrix4fv(sh["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 	r_cube.bind();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r_cube().ind);
 	glDrawElements(r_cube().mode, r_cube().count, r_cube().itype, 0);
@@ -264,11 +261,18 @@ void draw_scene(  shader & sh) {
 	draw_plane(sh);
 	stack.pop();
 
+	// draw sphere
+	//stack.push();
+	//stack.mult(glm::translate(glm::mat4(1.f), glm::vec3(0.0, 0.5, 0.0)));
+	//stack.mult(glm::scale(glm::mat4(1.f), glm::vec3(0.5, 0.5, 0.5)));
+	//draw_sphere(sh);
+	//stack.pop();
+
 	// draw pole
 	stack.push();
 	stack.mult(glm::translate(glm::mat4(1.f), glm::vec3(0.0, 0.5, 0.0)));
 	stack.mult(glm::scale(glm::mat4(1.f), glm::vec3(0.1, 0.5, 0.1)));
-	glUniformMatrix4fv(sh["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+	glUniformMatrix4fv(sh["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 	//draw_sphere(sh);
 	draw_cube(sh);
 	stack.pop();
@@ -298,6 +302,8 @@ void draw_texture(GLint tex_id ) {
 	glUseProgram(0);
 	glActiveTexture(at);
 }
+
+
 
 void blur_texture(GLint tex_id) {
 	GLint at;
@@ -379,11 +385,11 @@ int main(void)
 
 	/* Set the uT matrix to Identity */
 	glUseProgram(depth_shader.program);
-	glUniformMatrix4fv(depth_shader["uModel"], 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
+	glUniformMatrix4fv(depth_shader["uT"], 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
 	glUseProgram(shadow_shader.program);
-	glUniformMatrix4fv(shadow_shader["uModel"], 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
+	glUniformMatrix4fv(shadow_shader["uT"], 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
 	glUseProgram(flat_shader.program);
-	glUniformMatrix4fv(flat_shader["uModel"], 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
+	glUniformMatrix4fv(flat_shader["uT"], 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
 	glUseProgram(0);
 	check_gl_errors(__LINE__, __FILE__, true);
 	/* create a  long line*/
@@ -429,18 +435,18 @@ int main(void)
 	Lproj.view_matrix = glm::lookAt(glm::vec3(0, distance_light, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
 
 	/* Transformation to setup the point of view on the scene */
-	proj = glm::perspective(glm::radians(40.f), width / float(height), 2.f, 20.f);
+	proj = glm::perspective(glm::radians(40.f), width / float(height), 2.f, 100.f);
 	view = glm::lookAt(glm::vec3(0, 3, 4.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
 
 	glUseProgram(depth_shader.program);
 	glUniformMatrix4fv(depth_shader["uLightMatrix"], 1, GL_FALSE, &Lproj.light_matrix()[0][0]);
-	glUniformMatrix4fv(depth_shader["uModel"], 1, GL_FALSE, &glm::mat4(1.f)[0][0]);
+	glUniformMatrix4fv(depth_shader["uT"], 1, GL_FALSE, &glm::mat4(1.f)[0][0]);
 	glUseProgram(0);
 	check_gl_errors(__LINE__, __FILE__, true);
 
 	glUseProgram(shadow_shader.program);
-	glUniformMatrix4fv(shadow_shader["uProj"], 1, GL_FALSE, &proj[0][0]);
-	glUniformMatrix4fv(shadow_shader["uView"], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(shadow_shader["uP"], 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(shadow_shader["uV"], 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(shadow_shader["uLightMatrix"], 1, GL_FALSE, &Lproj.light_matrix()[0][0]);
 	glUniform1i(shadow_shader["uShadowMap"], 0);
 	glUniform2i(shadow_shader["uShadowMapSize"], Lproj.sm_size_x, Lproj.sm_size_y);
@@ -448,8 +454,8 @@ int main(void)
 	check_gl_errors(__LINE__, __FILE__, true);
 
 	glUseProgram(flat_shader.program);
-	glUniformMatrix4fv(flat_shader["uProj"], 1, GL_FALSE, &proj[0][0]);
-	glUniformMatrix4fv(flat_shader["uView"], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(flat_shader["uP"], 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(flat_shader["uV"], 1, GL_FALSE, &view[0][0]);
 	glUniform3f(flat_shader["uColor"], 1.0, 1.0, 1.0);
 	glUseProgram(0);
 	glEnable(GL_DEPTH_TEST);
@@ -493,7 +499,6 @@ int main(void)
 		stack.push();
 		stack.mult(tb[0].matrix());
 
-		/* create the shadow map*/
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo.id_fbo);
 		glViewport(0, 0, Lproj.sm_size_x, Lproj.sm_size_y);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -504,8 +509,9 @@ int main(void)
 		Lproj.set_projection(Lproj.view_matrix, box3(2.0));
 
 		glUniformMatrix4fv(depth_shader["uLightMatrix"], 1, GL_FALSE, &Lproj.light_matrix()[0][0]);
-		glUniformMatrix4fv(depth_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniformMatrix4fv(depth_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 		glUniform1f(depth_shader["uPlaneApprox"], k_plane_approx);
+
 
 		if (selected_mode == 4 || selected_mode == 5) {
 			glEnable(GL_CULL_FACE);
@@ -513,24 +519,20 @@ int main(void)
 		}
 
 		draw_scene(depth_shader);
-		/* here shadow map has been created in fbo.id_tex */
 
-
-		
 		glCullFace(GL_BACK);
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
+
 		if (selected_mode == 6) {
-			/* for Variance Shadow Mapping blur the texture */
 			blur_texture(fbo.id_tex);
 		}
 
-		/* final pass */
 		glViewport(0, 0, width, height);
 
 		glUseProgram(shadow_shader.program);
 		glUniformMatrix4fv(shadow_shader["uLightMatrix"], 1, GL_FALSE, &Lproj.light_matrix()[0][0]);
-		glUniformMatrix4fv(shadow_shader["uView"], 1, GL_FALSE, &curr_view[0][0]);
-		glUniformMatrix4fv(shadow_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniformMatrix4fv(shadow_shader["uV"], 1, GL_FALSE, &curr_view[0][0]);
+		glUniformMatrix4fv(shadow_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 		glUniform1fv(shadow_shader["uBias"],1, &depth_bias);
 		glUniform2i(shadow_shader["uShadowMapSize"], Lproj.sm_size_x, Lproj.sm_size_y );
 		glUniform1i(shadow_shader["uRenderMode"], selected_mode);
@@ -541,8 +543,8 @@ int main(void)
 
 		// render the reference frame
 		glUseProgram(flat_shader.program);
-		glUniformMatrix4fv(flat_shader["uView"], 1, GL_FALSE, &curr_view[0][0]);
-		glUniformMatrix4fv(flat_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniformMatrix4fv(flat_shader["uV"], 1, GL_FALSE, &curr_view[0][0]);
+		glUniformMatrix4fv(flat_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 		glUniform3f(flat_shader["uColor"], -1.0, 1.0, 1.0);
 
 		r_frame.bind();
@@ -561,19 +563,30 @@ int main(void)
 		stack.mult(inverse(Lproj.light_matrix()));
 		glUseProgram(flat_shader.program);
 		glUniform3f(flat_shader["uColor"], 0.0, 0.0, 1.0);
-		glUniformMatrix4fv(flat_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniformMatrix4fv(flat_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r_cube.elements[1].ind);
 		glDrawElements(r_cube.elements[1].mode, r_cube.elements[1].count, r_cube.elements[1].itype, 0);
 
 		stack.mult(glm::translate(glm::mat4(1.f), glm::vec3(0,0, -1)));
 		stack.mult(glm::scale(glm::mat4(1.f),glm::vec3(1, 1, 0)));
 		glUniform3f(flat_shader["uColor"], 1.0, 1.0, 0.0);
-		glUniformMatrix4fv(flat_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniformMatrix4fv(flat_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r_cube.elements[0].ind);
 		glDrawElements(r_cube.elements[0].mode, r_cube.elements[0].count, r_cube.elements[0].itype, 0);
 		stack.pop();
 
+
+
+// glDisable(GL_DEPTH_TEST);
+// glViewport(0, 0, 512, 512);
+// blur_texture(Lproj.tex.id);
+// draw_texture(Lproj.tex.id);
+// glEnable(GL_DEPTH_TEST);
+// draw_texture(fbo.id_tex);
+
+
 		check_gl_errors(__LINE__, __FILE__);
+
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

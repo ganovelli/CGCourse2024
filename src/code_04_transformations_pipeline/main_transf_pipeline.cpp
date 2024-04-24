@@ -3,10 +3,10 @@
 #include <string>
 #include <iostream>
 #include <time.h>
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
 
 
 

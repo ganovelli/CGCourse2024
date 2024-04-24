@@ -3,11 +3,11 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
-#include "..\common\matrix_stack.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
+#include "../common/matrix_stack.h"
 
 /*
 GLM library for math  https://github.com/g-truc/glm
@@ -35,7 +35,7 @@ glm::vec3 p0, p1;
 /* matrix to transform the scene according to the trackball */
 glm::mat4 trackball_matrix;
 
-float scaling_factor;
+float scaling_factor = 1.f;
 glm::mat4  scaling_matrix;
 
 glm::vec2 viewport_to_view(float pX, float pY) {
@@ -80,6 +80,14 @@ bool cursor_sphere_intersection(glm::vec3 & int_point, double xpos, double ypos)
 	/* here build the ray, test if it intersects the sphere and, if so, 
 	write the intersection point on "int_point"
 	*/
+	glm::vec3 o = view_frame*  glm::vec4(glm::vec3(0.f, 0.f, 0.f), 1.f);
+	glm::vec3 d = view_frame*  glm::vec4(glm::vec3(pos2, -2.f), 0.f);
+//	glm::vec3 c = view_frame*  glm::vec4(glm::vec3(0.f, 0.f, -10.f), 1.f);
+	glm::vec3 c = glm::vec4(glm::vec3(0.f, 0.f, 0.f), 1.f);
+
+	hit = ray_sphere_intersection(int_point, o, d, c, 2.f);
+	if (hit)
+		int_point -= c;
 
 	// return true if there is intersection
 	return hit;
@@ -100,11 +108,20 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 			(check the slides)
 		*/
 		// yuor code here...
+		glm::vec3 rotation_vector = glm::cross(glm::normalize(p0), glm::normalize(p1));
 
+		/* avoid near null rotation axis*/
+		if (glm::length(rotation_vector) > 0.01) {
+			float alpha = glm::asin(glm::length(rotation_vector));
+			glm::mat4 delta_rot = glm::rotate(glm::mat4(1.f), alpha, rotation_vector);
+			trackball_matrix = delta_rot * trackball_matrix;
 
-		/*p1 becomes the p0 value for the next movement */
-		p0 = p1;
+			/*p1 becomes the p0 value for the next movement */
+			p0 = p1;
+		}
 	}
+ 	else
+ 		is_trackball_dragged = false;
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -129,6 +146,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 			// mouse button has been released, the trackball is no more being  dragged
 			is_trackball_dragged = false;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	scaling_factor *= (yoffset>0) ? 1.1f : 0.97f;
+	std::cout << scaling_factor << std::endl;
+	scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor, scaling_factor, scaling_factor));
 }
 
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -162,6 +186,7 @@ int main(void)
 
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetKeyCallback(window, keyboard_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 
@@ -224,8 +249,8 @@ int main(void)
 		glClearColor(1, 1, 1, 1);
 		check_gl_errors(__LINE__, __FILE__);
 
-		trackball_matrix = glm::rotate(glm::mat4(1.f), glm::radians(float(clock()) / 10.f), glm::vec3(0, 1, 0));
-		glUniformMatrix4fv(basic_shader["uTrackball"], 1, GL_FALSE, &trackball_matrix[0][0]);
+	//	trackball_matrix = glm::rotate(glm::mat4(1.f), glm::radians(float(clock()) / 10.f), glm::vec3(0, 1, 0));
+		glUniformMatrix4fv(basic_shader["uTrackball"], 1, GL_FALSE, &(scaling_matrix*trackball_matrix)[0][0]);
 
  		r_cube.bind();
 

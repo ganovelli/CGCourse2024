@@ -3,11 +3,11 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
-#include "..\common\matrix_stack.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
+#include "../common/matrix_stack.h"
 
 /*
 GLM library for math  https://github.com/g-truc/glm
@@ -45,8 +45,10 @@ glm::vec3 viewport_to_view(float pX, float pY) {
 	res.x = (pX / float(width))*2.f - 1.f; 
 	res.y = ((height-pY) / float(height))*2.f - 1.f;
 	glm::mat4 invProj = glm::inverse(proj);
+	//  from NDC to view space
 	glm::vec4 res_np = invProj*glm::vec4(res.x, res.y, -1, 1);
 	res_np /= res_np.w;
+
 	return glm::vec3(res_np.x, res_np.y, res_np.z);
 }
 

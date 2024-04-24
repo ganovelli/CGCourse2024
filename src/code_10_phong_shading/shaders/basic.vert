@@ -1,11 +1,13 @@
 #version 460 core 
 layout (location = 0) in vec3 aPosition; 
 layout (location = 2) in vec3 aNormal; 
+layout (location = 4) in vec2 aTexCoord; 
  
 out vec3 vLDirVS;
 out vec3 vPosVS;
 out vec3 vNormalVS;
 out vec3 vColor;
+out vec2 vTexCoord0;
 
 uniform mat4 uProj;
 uniform mat4 uView;
@@ -43,6 +45,7 @@ void main(void)
 	
 	/* compute lighiting in the vertex shader (Gauraud shading) */
 	vColor    = phong(vLDirVS,normalize(-vPosVS),normalize(vNormalVS));
+	vTexCoord0    = aTexCoord;
 
     gl_Position = uProj*uView*uModel*vec4(aPosition, 1.0); 
 }

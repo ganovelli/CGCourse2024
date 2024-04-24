@@ -2,9 +2,9 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
 
 int main(void)
 {

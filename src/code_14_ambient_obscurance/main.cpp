@@ -4,26 +4,24 @@
 #include <iostream>
 #include <algorithm>
 #include <random>
-#include <conio.h>
-#include <direct.h>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
-#include "..\common\matrix_stack.h"
-#include "..\common\intersection.h"
-#include "..\common\trackball.h"
-#include "..\common\view_manipulator.h"
-#include "..\common\frame_buffer_object.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
+#include "../common/matrix_stack.h"
+#include "../common/intersection.h"
+#include "../common/trackball.h"
+#include "../common/view_manipulator.h"
+#include "../common/frame_buffer_object.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include "..\common\gltf_loader.h"
+#include "../common/gltf_loader.h"
 
 /*
 GLM library for math  https://github.com/g-truc/glm
@@ -34,8 +32,6 @@ and set the path properly.
 #include <glm/ext.hpp>  
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/matrix_access.hpp>
-
-int width, height;
 
 /* light direction in world space*/
 glm::vec4 Ldir;
@@ -186,7 +182,7 @@ void draw_scene(  shader & sh) {
 	glm::vec3 c = r_objs[0].bbox.center();
 	stack.mult(glm::scale(glm::mat4(1.f), glm::vec3(sf, sf, sf)));
 	stack.mult(glm::translate(glm::mat4(1.f), -c));
-	glUniformMatrix4fv(sh["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+	glUniformMatrix4fv(sh["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 	r_objs[0].bind();
 	glDrawElements(r_objs[0]().mode, r_objs[0]().count, r_objs[0]().itype, 0);
 	stack.pop(); 
@@ -296,10 +292,7 @@ int main(int argc,char**argv)
 	/* Create a windowed mode window and its OpenGL context */
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	width = 1000;
-	height = 800;
-
-	window = glfwCreateWindow(width, height, "code_14_ambient_obscurance", NULL, NULL);
+	window = glfwCreateWindow(1000, 800, "code_14_ambient_obscurance", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -341,6 +334,15 @@ int main(int argc,char**argv)
 	flat_shader.create_program((shaders_path + "flat.vert").c_str(), (shaders_path + "flat.frag").c_str());
 	blur_shader.create_program((shaders_path + "fsq.vert").c_str(), (shaders_path + "blur.frag").c_str());
 
+	/* create a  long line*/
+	r_line = shape_maker::line(100.f);
+
+	/* create 3 lines showing the reference frame*/
+	r_frame = shape_maker::frame(4.0);
+	
+
+
+ 	 
 	box3 bbox;
 	gltf_loader gltf_l;
 	gltf_l.load(argv[1]);
@@ -364,15 +366,15 @@ int main(int argc,char**argv)
 	view = glm::lookAt(glm::vec3(0, 0, 7.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
 
 	glUseProgram(g_buffer_shader.program);
-	glUniformMatrix4fv(g_buffer_shader["uProj"], 1, GL_FALSE, &proj[0][0]);
-	glUniformMatrix4fv(g_buffer_shader["uView"], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(g_buffer_shader["uP"], 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(g_buffer_shader["uV"], 1, GL_FALSE, &view[0][0]);
 	glUseProgram(0);
 
 	check_gl_errors(__LINE__, __FILE__, true);
 
 	glUseProgram(flat_shader.program);
-	glUniformMatrix4fv(flat_shader["uProj"], 1, GL_FALSE, &proj[0][0]);
-	glUniformMatrix4fv(flat_shader["uView"], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(flat_shader["uP"], 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(flat_shader["uV"], 1, GL_FALSE, &view[0][0]);
 	glUniform3f(flat_shader["uColor"], 1.0, 1.0, 1.0);
 	glUseProgram(0);
 	glEnable(GL_DEPTH_TEST);
@@ -387,7 +389,7 @@ int main(int argc,char**argv)
 	curr_tb = 0;
 
 	/* define the viewport  */
-	glViewport(0, 0, width, height);
+	glViewport(0, 0, 1000, 800);
 	
 	check_gl_errors(__LINE__, __FILE__, true);
 	fbo.create(g_buffer_size_x, g_buffer_size_y,true);
@@ -429,30 +431,29 @@ int main(int argc,char**argv)
 		stack.push();
 		stack.mult(tb[0].matrix());
 
-		/* first pass: create the G-Buffer */
   	 	glBindFramebuffer(GL_FRAMEBUFFER, fbo.id_fbo);
 
 		glBindTexture(GL_TEXTURE_2D, fbo.id_tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, g_buffer_size_x, g_buffer_size_y, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		// write onto two buffers (just depth and normals)
 		GLenum bufferlist[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-
-		// declare which  buffers will be drawn
 		glDrawBuffers(2, bufferlist);
  		glViewport(0, 0, g_buffer_size_x, g_buffer_size_y);
- 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+//glViewport(0, 0, 1000, 800);
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(g_buffer_shader.program);
-		glUniformMatrix4fv(g_buffer_shader["uView"], 1, GL_FALSE, &curr_view[0][0]);
-		glUniformMatrix4fv(g_buffer_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniformMatrix4fv(g_buffer_shader["uV"], 1, GL_FALSE, &curr_view[0][0]);
+		glUniformMatrix4fv(g_buffer_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
 
 		draw_scene(g_buffer_shader);
 		check_gl_errors(__LINE__, __FILE__, true);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		/* second pass: create the AO map */
+ //	draw_texture(fbo.id_tex1);
+//goto swapbuffers;
+//		glDrawBuffers(1, bufferlist);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo_ao.id_fbo);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		glUseProgram(ao_shader.program);
@@ -468,12 +469,16 @@ int main(int argc,char**argv)
 		draw_full_screen_quad();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		/* third pass: blur the AO map*/
-		for(int i=0; i < 3; ++i)
-		 blur_texture(fbo_ao.id_tex);
+		blur_texture(fbo_ao.id_tex);
+		blur_texture(fbo_ao.id_tex);
+		blur_texture(fbo_ao.id_tex);
 
-		/* final pass */
-		glViewport(0, 0, width, height);
+		glViewport(0, 0, 1000, 800);
+
+// draw_texture(fbo_ao.id_tex);
+// goto swapbuffers;
+
+//		glViewport(0, 0, 1000, 800);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
  		glUseProgram(final_shader.program);
 		glUniform1i(final_shader["uUseAO"], use_ao);
@@ -489,12 +494,55 @@ int main(int argc,char**argv)
 
  		draw_full_screen_quad();
 
+
+		// render the reference frame
+		glUseProgram(flat_shader.program);
+		glUniformMatrix4fv(flat_shader["uV"], 1, GL_FALSE, &curr_view[0][0]);
+		glUniformMatrix4fv(flat_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniform3f(flat_shader["uColor"], -1.0, 1.0, 1.0);
+
+		r_frame.bind();
+		glDrawArrays(GL_LINES, 0, 6);
+		glUseProgram(0);
+
+		check_gl_errors(__LINE__, __FILE__, true);
 		stack.pop();
+
+		// render the light direction
+		stack.push();
+		stack.mult(tb[1].matrix());
+
+		glUseProgram(flat_shader.program);
+		glUniformMatrix4fv(flat_shader["uT"], 1, GL_FALSE, &stack.m()[0][0]);
+		glUniform3f(flat_shader["uColor"], 1.0, 1.0, 1.0);
+		r_line.bind();
+		glDrawArrays(GL_LINES, 0, 2);
+		glUseProgram(0);
+swapbuffers:
+		stack.pop();
+
+		// glDisable(GL_DEPTH_TEST);
+		// glViewport(0, 0, 512, 512);
+	  	//	blur_texture(Lproj.tex.id);
+		// draw_texture(Lproj.tex.id);
+		//glEnable(GL_DEPTH_TEST);
+		// draw_texture(fbo.id_tex);
+
+
 		check_gl_errors(__LINE__, __FILE__);
 
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// show the shadow map 
+		//glViewport(0, 0, 200, 200);
+		//glDisable(GL_DEPTH_TEST);
+		//draw_texture(fbo.id_tex);
+		//glEnable(GL_DEPTH_TEST);
+		//glViewport(0, 0, 1000, 800);
+
+
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);

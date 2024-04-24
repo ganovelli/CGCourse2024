@@ -6,19 +6,21 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
-#include "..\common\debugging.h"
-#include "..\common\renderable.h"
-#include "..\common\shaders.h"
-#include "..\common\simple_shapes.h"
-#include "..\common\matrix_stack.h"
-#include "..\common\intersection.h"
-#include "..\common\trackball.h"
+#include "../common/debugging.h"
+#include "../common/renderable.h"
+#include "../common/shaders.h"
+#include "../common/simple_shapes.h"
+#include "../common/matrix_stack.h"
+#include "../common/intersection.h"
+#include "../common/trackball.h"
 
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
-#include "..\common\gltf_loader.h"
+#include "../common/gltf_loader.h"
+#include "../common/texture.h"
+
 
 /*
 GLM library for math  https://github.com/g-truc/glm
@@ -90,6 +92,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 			int id = colu[0] + (colu[1] << 8) + (colu[2] << 16);
 			std::cout << "selected ID: " << id << std::endl;
+
+			tb[0].set_center_radius(hit1, 2.f);
 		}
 		else
 			tb[curr_tb].mouse_press(proj, view, xpos, ypos);
@@ -110,7 +114,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 /* callback function called when a key is pressed */
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	/* every time any key is presses it switch from controlling trackball tb[0] to tb[1] and viceversa */
-	if (action == GLFW_PRESS)
+	if (action == GLFW_PRESS && ((mods & GLFW_MOD_CONTROL)==0))
 		curr_tb = 1 - curr_tb;
 }
 
@@ -135,6 +139,8 @@ float shininess = 1.0;
 	shading_mode = 1 // flat shading
 	shading_mode = 2 // Gauraud shading
 	shading_mode = 3 // Phong shading
+	shading_mode = 4 // pbrBaseTexture
+
 */
 int shading_mode = 0;
 
@@ -149,6 +155,7 @@ void gui_setup() {
 		if (ImGui::Selectable("Flat-Per Face ", shading_mode == 1)) shading_mode = 1;
 		if (ImGui::Selectable("Gaurad", shading_mode == 2)) shading_mode = 2;
 		if (ImGui::Selectable("Phong", shading_mode == 3)) shading_mode = 3;
+		if (ImGui::Selectable("Base Texture", shading_mode == 4)) shading_mode = 4;
 		ImGui::EndMenu();
 	}
 	if (ImGui::BeginMenu("Light ")) {
@@ -298,7 +305,10 @@ int main(int argc , char ** argv)
 	tb[1].set_center_radius(glm::vec3(0, 0, 0), 2.f);
 	curr_tb = 0;
 
-	 
+	
+	glActiveTexture(GL_TEXTURE0);
+	
+
 	glEnable(GL_DEPTH_TEST);
 	glUseProgram(basic_shader.program);
 /* Loop until the user closes the window */
@@ -308,6 +318,8 @@ int main(int argc , char ** argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(0.8f, 0.8f, 0.9f, 1.f);
 	
+		glUniform1i(basic_shader["uTexColor"], 0);
+
 		glUniform1i(basic_shader["uShadingMode"], shading_mode);
 		glUniform3fv(basic_shader["uDiffuseColor"], 1, &d_color[0]);
 		glUniform3fv(basic_shader["uAmbientColor"], 1, &a_color[0]);
@@ -328,7 +340,6 @@ int main(int argc , char ** argv)
 			//transate and scale so the the whole scene is included in the unit cube centered in 
 			// the origin in workd space
 			stack.mult(glm::scale(glm::mat4(1.f), glm::vec3(scale, scale, scale)));
-			stack.mult(glm::translate(glm::mat4(1.f), glm::vec3(0, (bbox.max.y - bbox.min.y)*0.5, 0)));
 			stack.mult(glm::translate(glm::mat4(1.f), glm::vec3(-bbox.center())));
 
 			// render each renderable
@@ -337,9 +348,13 @@ int main(int argc , char ** argv)
 				stack.push();
 				// each object had its own transformation that was read in the gltf file
 				stack.mult(obj[i].transform);
+
+				if (shading_mode==4 && obj[i].mater.base_color_texture != -1)
+					glBindTexture(GL_TEXTURE_2D, obj[i].mater.base_color_texture);
+
 				glUniformMatrix4fv(basic_shader["uModel"], 1, GL_FALSE, &stack.m()[0][0]);
 				glUniform3f(basic_shader["uColor"], 1.0, 0.0, 0.0);
-				glDrawElements(obj[i]().mode, obj[i]().count, obj[i]().itype, 0);
+				glDrawElements(obj[i]().mode, obj[i]().count, obj[i]().itype, 0);	
 				stack.pop();
 			}
 			stack.pop(); // setup model transformation for loaded object

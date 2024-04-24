@@ -32,7 +32,7 @@ int main(int arcgc, char**argv)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1000, 800, "code_08_gltf_loader", NULL, NULL);
+    window = glfwCreateWindow(1000, 800, "code_09_gltf_loader", NULL, NULL);
     if (!window)
     {
         glfwTerminate();

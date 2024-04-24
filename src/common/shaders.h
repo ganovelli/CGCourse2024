@@ -119,7 +119,8 @@ private:
 		 */
 		void bind_uniform_variables(std::string code) {
 
-			code.erase(std::remove(code.begin(), code.end(), '\n'), code.end());
+                        code.erase(std::remove(code.begin(), code.end(), '\r'), code.end());
+                        code.erase(std::remove(code.begin(), code.end(), '\n'), code.end());
 			code.erase(std::remove(code.begin(), code.end(), '\t'), code.end());
 			code.erase(std::remove(code.begin(), code.end(), '\b'), code.end());
 
