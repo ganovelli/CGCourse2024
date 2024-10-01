@@ -18,6 +18,11 @@ struct gltf_loader {
 	std::vector<GLuint> id_textures;
 	int n_vert, n_tri;
 
+	void reset() {
+		rs.clear();
+		id_textures.clear();
+		n_vert = n_tri = 0;
+	}
 	static std::string GetFilePathExtension(const std::string& FileName) {
 		if (FileName.find_last_of(".") != std::string::npos)
 			return FileName.substr(FileName.find_last_of(".") + 1);
@@ -190,7 +195,7 @@ struct gltf_loader {
 				int index;
 				
 				index = mat.pbrMetallicRoughness.baseColorTexture.index;
-				r.mater.base_color_texture = (index != -1)?this->id_textures[index]: this->id_textures[0];
+				r.mater.base_color_texture = (index != -1)?this->id_textures[index]: this->id_textures.empty()?-1:this->id_textures[0];
 
 				index = mat.normalTexture.index;
 				r.mater.normal_texture = (index != -1) ? this->id_textures[index] : -1;
@@ -286,6 +291,7 @@ struct gltf_loader {
 	}
 
 	void load_to_renderable(std::string input_filename, std::vector<renderable> & _renderable, box3 & bbox) {
+		reset();
 		load(input_filename);
 		create_renderable(_renderable, bbox);
 	}
